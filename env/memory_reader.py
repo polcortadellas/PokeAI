@@ -32,6 +32,25 @@ class RAMMap:
     # Current HP of the first Pokémon in the party: wPartyMon1HP (0xD16C) (2 bytes, big-endian)
     PLAYER_HP: int = 0xD16C
 
+    # Player's current money: wPlayerMoney (0xD347) (3 bytes BCD, big-endian)
+    PLAYER_MONEY: int = 0xD347
+
+    # Map IDs of all Pokémon Centers in Pokémon Red (English)
+    POKECENTER_MAP_IDS: set[int] = {
+        0x29,  # VIRIDIAN_POKECENTER
+        0x3A,  # PEWTER_POKECENTER
+        0x40,  # CERULEAN_POKECENTER
+        0x44,  # ROUTE_4_POKECENTER (Mt. Moon)
+        0x51,  # ROUTE_10_POKECENTER (Rock Tunnel)
+        0x59,  # VERMILION_POKECENTER
+        0x85,  # CELADON_POKECENTER
+        0x8D,  # LAVENDER_POKECENTER
+        0x9A,  # FUCHSIA_POKECENTER
+        0xAB,  # CINNABAR_POKECENTER
+        0xB6,  # SAFFRON_POKECENTER
+        0xAE,  # INDIGO_PLATEAU_LOBBY
+    }
+
 
 class MemoryReader:
     """
@@ -146,3 +165,40 @@ class MemoryReader:
         high_byte = int(self._pyboy.memory[RAMMap.PLAYER_HP])
         low_byte = int(self._pyboy.memory[RAMMap.PLAYER_HP + 1])
         return (high_byte << 8) | low_byte
+
+    def get_money(self) -> int:
+        """
+        Retrieves the player's current money from RAM.
+        The money is stored as a 3-byte Binary-Coded Decimal (BCD) value,
+        big-endian, representing up to 6 digits (max $999,999).
+
+        Returns:
+            int: The player's money as an integer.
+        """
+        # Address: 0xD347 (wPlayerMoney) - 3 bytes BCD
+        money_bytes = [
+            self._pyboy.memory[RAMMap.PLAYER_MONEY],
+            self._pyboy.memory[RAMMap.PLAYER_MONEY + 1],
+            self._pyboy.memory[RAMMap.PLAYER_MONEY + 2]
+        ]
+        
+        # BCD (Binary-Coded Decimal) conversion logic:
+        # Each byte contains two decimal digits: the high nibble (tens) and the low nibble (ones).
+        # We iterate over the big-endian bytes, multiplying the accumulated value by 100
+        # and adding the decoded value of the current byte.
+        money = 0
+        for byte_val in money_bytes:
+            high_nibble = (byte_val >> 4) & 0x0F
+            low_nibble = byte_val & 0x0F
+            money = (money * 100) + (high_nibble * 10) + low_nibble
+            
+        return money
+
+    def is_in_pokemon_center(self) -> bool:
+        """
+        Checks if the player is currently inside a Pokémon Center by comparing the Map ID.
+
+        Returns:
+            bool: True if the current map is a Pokémon Center, False otherwise.
+        """
+        return self.get_map_id() in RAMMap.POKECENTER_MAP_IDS
