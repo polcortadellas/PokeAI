@@ -1,0 +1,4 @@
+numpy==2.5.0
+pyboy==2.7.0
+PySDL2==0.9.17
+pysdl2-dll==2.32.10
