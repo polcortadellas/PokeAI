@@ -19,6 +19,10 @@ class RAMMap:
     # Active menu item/active dialog state: wCurrentMenuItem (0xCC26)
     MENU_ACTIVE: int = 0xCC26
 
+    # Red's House map IDs (starting location)
+    START_HOUSE_1F: int = 0x25
+    START_HOUSE_2F: int = 0x26
+
     # Battle state flag: wIsInBattle (0xD057) (0 = Free, 1 = Wild, 2 = Trainer)
     BATTLE_STATE: int = 0xD057
 
