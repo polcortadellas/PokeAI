@@ -3,7 +3,7 @@ from env.pokemon_env import PokemonEnv
 
 
 def main():
-    print("🎮 Iniciando prueba de humo: Movimiento Aleatorio...")
+    print("Starting smoke test: Random Movement...")
 
     rom_path = "Pokemon - Red Version (USA, Europe).gb"
 
@@ -18,14 +18,14 @@ def main():
             obs, reward, terminated, truncated, info = env.step(accion)
 
             if reward != 0:
-                print(f"Acción: {accion} | Recompensa: {reward:.2f} | Nivel Total: {info['total_level']}")
+                print(f"Action: {accion} | Reward: {reward:.2f} | Total Level: {info['total_level']}")
 
             if terminated or truncated:
-                print("🔄 El jugador ha vuelto a la casa inicial. Reiniciando...")
+                print("Player returned to starting house. Restarting...")
                 obs, info = env.reset()
 
     except KeyboardInterrupt:
-        print("\n🛑 Prueba detenida por el usuario.")
+        print("\nTest stopped by the user.")
     finally:
         env.close()
 
