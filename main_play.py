@@ -8,7 +8,7 @@ def main():
 
     # 1. Search in your 'checkpoints' folder for the file with the highest number
     # and put its exact name here:
-    MODEL_PATH = "checkpoints/chkp1/ppo_pokemon_960000_steps.zip"
+    MODEL_PATH = "checkpoints/ppo_pokemon_960000_steps.zip"
     ROM_PATH: str = "Pokemon - Red Version (USA, Europe).gb"
 
     # 2. Loading the brain (the trained model)
