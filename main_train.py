@@ -30,6 +30,11 @@ class TrainConfig:
     # PPO hyperparameters
     POLICY: str = "MlpPolicy"
     VERBOSE: int = 1
+    N_STEPS: int = 2048
+    BATCH_SIZE: int = 128
+    N_EPOCHS: int = 4
+    GAMMA: float = 0.998
+    ENT_COEF: float = 0.01
 
 
 def make_env(rom_path: str, rank: int, seed: int = 0) -> callable:
@@ -83,7 +88,12 @@ def main() -> None:
         TrainConfig.POLICY,
         env,
         verbose=TrainConfig.VERBOSE,
-        tensorboard_log=TrainConfig.TENSORBOARD_LOG_DIR
+        tensorboard_log=TrainConfig.TENSORBOARD_LOG_DIR,
+        n_steps=TrainConfig.N_STEPS,
+        batch_size=TrainConfig.BATCH_SIZE,
+        n_epochs=TrainConfig.N_EPOCHS,
+        gamma=TrainConfig.GAMMA,
+        ent_coef=TrainConfig.ENT_COEF
     )
 
     # Start the training process
