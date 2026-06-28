@@ -101,6 +101,8 @@ class PokemonEnv(gym.Env):
         is_menu_open = self.reader.is_menu_open()
         is_in_pc = self.reader.is_in_pokemon_center()
         events = self.reader.get_event_flags_count()
+        pokedex = self.reader.get_pokedex_count()
+        badges = self.reader.get_badges_count()
 
         if not self.has_left_start_house:
             if map_id not in (RAMMap.START_HOUSE_1F, RAMMap.START_HOUSE_2F):
@@ -115,13 +117,16 @@ class PokemonEnv(gym.Env):
         p_menu = self.reward_system.compute_menu_penalty(is_menu_open)
         r_lvl = self.reward_system.compute_level_reward(total_level, is_in_pc)
         r_evt = self.reward_system.compute_event_reward(events)
+        p_step = self.reward_system.compute_step_penalty()
+        r_dex = self.reward_system.compute_pokedex_reward(pokedex)
+        r_bdg = self.reward_system.compute_badge_reward(badges)
 
         previous_battle_state = self.reward_system.last_battle_state
         if previous_battle_state is None:
             previous_battle_state = battle_state
         r_bat = self.reward_system.compute_battle_reward(battle_state, previous_battle_state)
 
-        reward = r_exp + p_menu + r_lvl + r_bat + r_evt
+        reward = r_exp + p_menu + r_lvl + r_bat + r_evt + p_step + r_dex + r_bdg
 
         obs = np.array([x, y, map_id, total_level, battle_state], dtype=np.int32)
 
@@ -135,7 +140,9 @@ class PokemonEnv(gym.Env):
             "party_levels": self.reader.get_party_levels(),
             "player_hp": self.reader.get_player_hp(),
             "money": self.reader.get_money(),
-            "events": events
+            "events": events,
+            "pokedex": pokedex,
+            "badges": badges
         }
 
         truncated = False
@@ -169,8 +176,7 @@ class PokemonEnv(gym.Env):
         # Reset delegate states
         self.reward_system = RewardSystem()
         self.has_left_start_house = False
-        
-        # Get initial state values
+
         x = self.reader.get_coordinate_x()
         y = self.reader.get_coordinate_y()
         map_id = self.reader.get_map_id()
@@ -189,7 +195,9 @@ class PokemonEnv(gym.Env):
             "party_levels": self.reader.get_party_levels(),
             "player_hp": self.reader.get_player_hp(),
             "money": self.reader.get_money(),
-            "events": self.reader.get_event_flags_count()
+            "events": self.reader.get_event_flags_count(),
+            "pokedex": self.reader.get_pokedex_count(),
+            "badges": self.reader.get_badges_count()
         }
 
         return obs, info

@@ -2,6 +2,7 @@ import os
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
+import gymnasium as gym
 
 from env.pokemon_env import PokemonEnv
 
@@ -34,7 +35,8 @@ class TrainConfig:
     BATCH_SIZE: int = 128
     N_EPOCHS: int = 4
     GAMMA: float = 0.998
-    ENT_COEF: float = 0.01
+    ENT_COEF: float = 0.05
+
 
 
 def make_env(rom_path: str, rank: int, seed: int = 0) -> callable:
@@ -54,10 +56,10 @@ def make_env(rom_path: str, rank: int, seed: int = 0) -> callable:
         # Launching with headless=True is critical when running multiple instances
         # in parallel to prevent spawning 16 GUI windows.
         env = PokemonEnv(rom_path=rom_path, headless=True)
+        env = gym.wrappers.TimeLimit(env, max_episode_steps=2048)
         env.reset(seed=seed + rank)
         return env
     return _init
-
 
 def main() -> None:
     """

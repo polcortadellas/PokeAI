@@ -23,6 +23,9 @@ class RAMMap:
     }
     EVENT_FLAGS_START: int = 0xD747
     EVENT_FLAGS_END: int = 0xD886
+    POKEDEX_OWNED_START: int = 0xD2F7
+    POKEDEX_OWNED_END: int = 0xD30A
+    BADGES: int = 0xD356
 
 class MemoryReader:
     """
@@ -94,3 +97,18 @@ class MemoryReader:
             byte_value = self._pyboy.memory[address]
             total_events += bin(byte_value).count('1')
         return total_events
+
+    def get_pokedex_count(self) -> int:
+        """
+        Reads the bitfield representing the Pokémon caught in the Pokédex.
+        """
+        count = 0
+        for address in range(RAMMap.POKEDEX_OWNED_START, RAMMap.POKEDEX_OWNED_END):
+            count += bin(self._pyboy.memory[address]).count('1')
+        return count
+
+    def get_badges_count(self) -> int:
+        """
+        Reads the bitfield representing the Gym Badges obtained.
+        """
+        return bin(self._pyboy.memory[RAMMap.BADGES]).count('1')
