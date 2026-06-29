@@ -6,11 +6,12 @@ class RewardConfig:
     MAP_DISCOVERY_REWARD: float = 50.0
     EVENT_REWARD_STEP: float = 50.0
     MENU_PENALTY_STEP: float = -0.1
-    LEVEL_REWARD_STEP: float = 10.0
-    BATTLE_VICTORY_REWARD: float = 5.0
+    LEVEL_REWARD_STEP: float = 25.0
+    BATTLE_VICTORY_REWARD: float = 50.0
     STEP_PENALTY: float = -0.001
     POKEDEX_REWARD_STEP: float = 100.0
     BADGE_REWARD_STEP: float = 500.0
+
 
 class RewardSystem:
     """

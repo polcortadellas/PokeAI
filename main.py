@@ -7,7 +7,7 @@ import gymnasium as gym
 from pyboy import PyBoy
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.callbacks import CheckpointCallback
+from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 
 from env.pokemon_env import PokemonEnv
 
@@ -16,18 +16,11 @@ def make_env(rom_path: str, rank: int, seed: int = 0) -> Callable[[], PokemonEnv
     """
     Helper function to generate a callable that instantiates a PokemonEnv.
     Ensures each environment runs independently in its own subprocess.
-
-    Args:
-        rom_path: Path to the Pokémon Red ROM.
-        rank: The index of the environment instance (used to offset seeds).
-        seed: The base seed for random number generators.
-
-    Returns:
-        Callable[[], PokemonEnv]: Function returning an initialized PokemonEnv.
     """
+
     def _init() -> PokemonEnv:
         env = PokemonEnv(rom_path=rom_path, headless=True)
-        env = gym.wrappers.TimeLimit(env, max_episode_steps=2048)
+        env = gym.wrappers.TimeLimit(env, max_episode_steps=20480)
         env.reset(seed=seed + rank)
         return env
     return _init
@@ -49,14 +42,24 @@ def run_training(args: argparse.Namespace) -> None:
         make_env(args.rom_path, i, args.seed) for i in range(args.num_envs)
     ])
 
-    # Configure checkpoint saving callback
+
     checkpoint_callback = CheckpointCallback(
         save_freq=args.checkpoint_freq,
         save_path=args.checkpoint_dir,
         name_prefix="ppo_pokemon"
     )
 
-    # Initialize the PPO agent
+
+    eval_env = make_env(args.rom_path, rank=99, seed=args.seed)()
+    eval_callback = EvalCallback(
+        eval_env,
+        best_model_save_path=f"{args.checkpoint_dir}/best_model/",
+        log_path=args.tensorboard_log_dir,
+        eval_freq=args.checkpoint_freq,
+        deterministic=False,
+        render=False
+    )
+
     print("Initializing PPO model...")
     model = PPO(
         args.policy,
@@ -70,24 +73,21 @@ def run_training(args: argparse.Namespace) -> None:
         ent_coef=args.ent_coef
     )
 
-    # Start the training process
     print(f"Starting learning loop for {args.total_timesteps} total steps...")
     try:
         model.learn(
             total_timesteps=args.total_timesteps,
-            callback=checkpoint_callback
+            callback=[checkpoint_callback, eval_callback]  # Ambos callbacks activos
         )
     finally:
         print("Closing parallel environments...")
         env.close()
+        eval_env.close()
 
 
 def run_play(args: argparse.Namespace) -> None:
     """
     Loads a trained PPO model and displays the agent playing with a GUI or headless window.
-
-    Args:
-        args: Parsed command-line arguments containing the model path and ROM path.
     """
     print("Starting the Grand Exhibition...")
     print(f"Loading model from {args.model}...")
@@ -97,7 +97,6 @@ def run_play(args: argparse.Namespace) -> None:
         print(f"Error! File {args.model} not found.")
         return
 
-    # Start the environment with graphical window (or headless if configured)
     env = PokemonEnv(rom_path=args.rom_path, headless=args.headless)
     obs, info = env.reset(seed=args.seed)
 
@@ -130,9 +129,6 @@ def run_eval(args: argparse.Namespace) -> None:
     """
     Evaluates a trained model in headless or visual mode, tracks milestones,
     and prints a final progress report.
-
-    Args:
-        args: Parsed command-line arguments containing the evaluation parameters.
     """
     steps = args.steps if args.steps is not None else 15000
     print("🕵️ Starting Evaluation...")
@@ -168,6 +164,8 @@ def run_eval(args: argparse.Namespace) -> None:
     MAX_EXPECTED_EVENTS = 250
     start_time = time.time()
 
+    previous_battle_state = 0  # <--- EL DETECTOR DE BATALLAS
+
     print("\n Releasing the AI into the wild. Please wait...\n")
 
     try:
@@ -192,6 +190,18 @@ def run_eval(args: argparse.Namespace) -> None:
             if not milestones["first_battle"] and info["battle_state"] != 0:
                 milestones["first_battle"] = True
                 print(f" [Step {step}] MILESTONE: The AI entered a battle!")
+
+            # --- LA IA GANA LA BATALLA ---
+            if previous_battle_state in (1, 2) and info["battle_state"] == 0:
+                if not milestones["won_battle"]:
+                    milestones["won_battle"] = True
+                    print(f" [Step {step}] MILESTONE: The AI WON a battle!")
+            previous_battle_state = info["battle_state"]
+
+            # --- LA IA LLEGA A CIUDAD VERDE ---
+            if not milestones["reached_viridian"] and info["map_id"] == 1:
+                milestones["reached_viridian"] = True
+                print(f" [Step {step}] MILESTONE: The AI reached Viridian City!")
 
             # Update Stats silently
             if sum(info["party_levels"]) > stats["max_level"]:
@@ -224,7 +234,7 @@ def run_eval(args: argparse.Namespace) -> None:
     print("-" * 40)
     print(" MILESTONES ACHIEVED:")
     for milestone, achieved in milestones.items():
-        status = " YES" if achieved else "❌ NO"
+        status = " ✅ YES" if achieved else "❌ NO"
         print(f"  - {milestone.replace('_', ' ').title()}: {status}")
     print("-" * 40)
     print(" PROGRESS STATS:")
@@ -234,7 +244,6 @@ def run_eval(args: argparse.Namespace) -> None:
     print(f"  - Story Events Triggered: {stats['max_events']}")
     print(f"  - OVERALL STORY PROGRESS: {progress_percent:.2f}%")
     print("=" * 40)
-
 
 def run_test(args: argparse.Namespace) -> None:
     """
@@ -302,8 +311,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="PokeAI Command Line Utility - Swiss Army Knife for Pokemon RL Agent"
     )
-    
-    # Mode selection argument
+
     parser.add_argument(
         "--mode",
         type=str,
@@ -312,7 +320,6 @@ def main() -> None:
         help="Operation mode: train, play, eval, test, or create"
     )
 
-    # General configuration arguments
     parser.add_argument(
         "--rom-path",
         type=str,
@@ -331,11 +338,10 @@ def main() -> None:
         help="Run emulator in headless mode (no GUI window)"
     )
 
-    # Play/Evaluation/Testing arguments
     parser.add_argument(
         "--model",
         type=str,
-        default="checkpoints/ppo_pokemon_960000_steps.zip",
+        default="checkpoints/best_model/best_model.zip",
         help="Path to the trained model .zip file (used in play and eval modes)"
     )
     parser.add_argument(
@@ -345,7 +351,6 @@ def main() -> None:
         help="Maximum steps to run (default: 15000 for eval, infinite for play/test)"
     )
 
-    # Training-specific arguments
     parser.add_argument(
         "--num-envs",
         type=int,
@@ -421,7 +426,6 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # Route execution based on selected mode
     if args.mode == "train":
         run_training(args)
     elif args.mode == "play":

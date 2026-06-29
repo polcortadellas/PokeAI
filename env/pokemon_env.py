@@ -114,7 +114,10 @@ class PokemonEnv(gym.Env):
             terminated = True
 
         r_exp = self.reward_system.compute_exploration_reward(map_id, x, y)
-        p_menu = self.reward_system.compute_menu_penalty(is_menu_open)
+        if battle_state == 0:
+            p_menu = self.reward_system.compute_menu_penalty(is_menu_open)
+        else:
+            p_menu = 0.0
         r_lvl = self.reward_system.compute_level_reward(total_level, is_in_pc)
         r_evt = self.reward_system.compute_event_reward(events)
         p_step = self.reward_system.compute_step_penalty()
