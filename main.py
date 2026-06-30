@@ -77,7 +77,7 @@ def run_training(args: argparse.Namespace) -> None:
     try:
         model.learn(
             total_timesteps=args.total_timesteps,
-            callback=[checkpoint_callback, eval_callback]  # Ambos callbacks activos
+            callback=[checkpoint_callback, eval_callback]
         )
     finally:
         print("Closing parallel environments...")
@@ -114,7 +114,6 @@ def run_play(args: argparse.Namespace) -> None:
             obs, reward, terminated, truncated, info = env.step(int(action))
             step_count += 1
 
-            # If the agent dies or the game ends, we restart it
             if terminated or truncated:
                 print("🔄 End of episode. Restarting...")
                 obs, info = env.reset()
@@ -164,7 +163,7 @@ def run_eval(args: argparse.Namespace) -> None:
     MAX_EXPECTED_EVENTS = 250
     start_time = time.time()
 
-    previous_battle_state = 0  # <--- EL DETECTOR DE BATALLAS
+    previous_battle_state = 0
 
     print("\n Releasing the AI into the wild. Please wait...\n")
 
@@ -191,14 +190,12 @@ def run_eval(args: argparse.Namespace) -> None:
                 milestones["first_battle"] = True
                 print(f" [Step {step}] MILESTONE: The AI entered a battle!")
 
-            # --- LA IA GANA LA BATALLA ---
             if previous_battle_state in (1, 2) and info["battle_state"] == 0:
                 if not milestones["won_battle"]:
                     milestones["won_battle"] = True
                     print(f" [Step {step}] MILESTONE: The AI WON a battle!")
             previous_battle_state = info["battle_state"]
 
-            # --- LA IA LLEGA A CIUDAD VERDE ---
             if not milestones["reached_viridian"] and info["map_id"] == 1:
                 milestones["reached_viridian"] = True
                 print(f" [Step {step}] MILESTONE: The AI reached Viridian City!")

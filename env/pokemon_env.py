@@ -82,8 +82,6 @@ class PokemonEnv(gym.Env):
         Returns:
             tuple: (observation, reward, terminated, truncated, info)
         """
-        # Execute the action: hold button for 8 frames, release for 16 (total 24 ticks)
-        # Keeping it pressed briefly ensures the game registers exactly one input.
         press_event = self.action_to_press[action]
         self.pyboy.send_input(press_event)
         self.pyboy.tick(8, render=not self.headless)
@@ -92,7 +90,6 @@ class PokemonEnv(gym.Env):
         self.pyboy.send_input(release_event)
         self.pyboy.tick(16, render=not self.headless)
         
-        # Read the current game state from memory
         x = self.reader.get_coordinate_x()
         y = self.reader.get_coordinate_y()
         map_id = self.reader.get_map_id()
@@ -108,7 +105,6 @@ class PokemonEnv(gym.Env):
             if map_id not in (RAMMap.START_HOUSE_1F, RAMMap.START_HOUSE_2F):
                 self.has_left_start_house = True
         
-        # Determine if the episode is terminated (e.g. player whited out and respawned at start house)
         terminated = False
         if self.has_left_start_house and map_id in (RAMMap.START_HOUSE_1F, RAMMap.START_HOUSE_2F):
             terminated = True
@@ -172,11 +168,9 @@ class PokemonEnv(gym.Env):
         if seed is not None:
             np.random.seed(seed)
             
-        # Restore PyBoy to the saved initial state
         self.initial_state.seek(0)
         self.pyboy.load_state(self.initial_state)
         
-        # Reset delegate states
         self.reward_system = RewardSystem()
         self.has_left_start_house = False
 
@@ -213,7 +207,6 @@ class PokemonEnv(gym.Env):
             np.ndarray | None: Screen image array if render_mode is "rgb_array", else None.
         """
         if self.render_mode == "rgb_array":
-            # Convert emulator's PIL screen image to a NumPy RGB array
             return np.array(self.pyboy.screen.image)
         return None
 

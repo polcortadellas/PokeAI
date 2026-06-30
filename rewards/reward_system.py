@@ -2,15 +2,15 @@ class RewardConfig:
     """
     Configuration parameters for the reward and penalty system.
     """
-    EXPLORATION_REWARD: float = 2.0  # (Sube) Que moverse pague bien
-    MAP_DISCOVERY_REWARD: float = 1000.0  # (DISPARADO) ¡Encontrar una ciudad nueva la hará millonaria!
-    EVENT_REWARD_STEP: float = 200.0  # (Sube) Fomentar que hable con NPCs clave
+    EXPLORATION_REWARD: float = 2.0
+    MAP_DISCOVERY_REWARD: float = 1000.0
+    EVENT_REWARD_STEP: float = 200.0
     MENU_PENALTY_STEP: float = -0.1
-    LEVEL_REWARD_STEP: float = 2.0  # (NERFEADO) Ya no nos importa tanto el nivel
-    BATTLE_VICTORY_REWARD: float = 10.0  # (NERFEADO) Pelear es secundario
+    LEVEL_REWARD_STEP: float = 2.0
+    BATTLE_VICTORY_REWARD: float = 10.0
     STEP_PENALTY: float = -0.001
     POKEDEX_REWARD_STEP: float = 50.0
-    BADGE_REWARD_STEP: float = 5000.0  # El Santo Grial (Derrotar a Brock)
+    BADGE_REWARD_STEP: float = 5000.0
 
 
 class RewardSystem:

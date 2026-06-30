@@ -1,8 +1,8 @@
-# 🏆 Reporte de Evaluación - Versión 4
-**Fecha:** Tue Jun 30 03:13:52 AM CEST 2026
-**Modelo:** `champion_model.zip`
+# 🏆 Evaluation Report - Version 4
+**Date:** Tue Jun 30 03:13:52 AM CEST 2026
+**Model:** `champion_model.zip`
 
-## 📈 Resultados de la Auditoría
+## 📈 Audit Results
 ```text
 UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
 🕵️ Starting Evaluation...

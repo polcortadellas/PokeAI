@@ -14,37 +14,38 @@ CURRENT_RELEASE="$RELEASES_DIR/run_$RUN_NUM"
 mkdir -p "$CURRENT_RELEASE"
 
 echo "=========================================="
-echo "🚀 PIPELINE: CREANDO VERSIÓN $RUN_NUM"
+echo "🚀 PIPELINE: CREATING VERSION $RUN_NUM"
 echo "=========================================="
 
-echo -e "\n🧠 [1/3] Iniciando entrenamiento de 1M de pasos..."
+echo -e "\n🧠 [1/3] Starting training of 5M steps..."
 .venv/bin/python main.py --mode train --total-timesteps 5000000
 
-echo -e "\n🔍 [2/3] Buscando el 'best_model.zip'..."
+echo -e "\n🔍 [2/3] Searching for 'best_model.zip'..."
 
 BEST_MODEL="checkpoints/best_model/best_model.zip"
 
 if [ ! -f "$BEST_MODEL" ]; then
-    echo "❌ ERROR: No se encontró el best_model.zip. ¿Configuraste el EvalCallback en main.py?"
+    echo "❌ ERROR: best_model.zip not found. Did you configure EvalCallback in main.py?"
     exit 1
 fi
 
-echo -e "✅ Mejor modelo encontrado. Copiando a la caja fuerte..."
+echo -e "✅ Best model found. Copying to the vault..."
 cp "$BEST_MODEL" "$CURRENT_RELEASE/champion_model.zip"
 
-REPORT_FILE="$CURRENT_RELEASE/reporte_eval.md"
+REPORT_FILE="$CURRENT_RELEASE/eval_report.md"
 
-echo -e "\n📊 [3/3] Evaluando al campeón y generando .md..."
+echo -e "\n📊 [3/3] Evaluating the champion and generating .md..."
 
-echo "# 🏆 Reporte de Evaluación - Versión $RUN_NUM" > "$REPORT_FILE"
-echo "**Fecha:** $(date)" >> "$REPORT_FILE"
-echo "**Modelo:** \`champion_model.zip\`" >> "$REPORT_FILE"
+echo "# 🏆 Evaluation Report - Version $RUN_NUM" > "$REPORT_FILE"
+echo "**Date:** $(date)" >> "$REPORT_FILE"
+echo "**Model:** \`champion_model.zip\`" >> "$REPORT_FILE"
 echo "" >> "$REPORT_FILE"
-echo "## 📈 Resultados de la Auditoría" >> "$REPORT_FILE"
+echo "## 📈 Audit Results" >> "$REPORT_FILE"
+
 echo '```text' >> "$REPORT_FILE"
 
 .venv/bin/python main.py --mode eval --model "$CURRENT_RELEASE/champion_model.zip" --headless --steps 15000 >> "$REPORT_FILE" 2>&1
 
 echo '```' >> "$REPORT_FILE"
 
-echo -e "\n🎉 ¡Pipeline completado! La Versión $RUN_NUM ha sido guardada a salvo en $CURRENT_RELEASE."
+echo -e "\n🎉 Pipeline completed! Version $RUN_NUM has been saved safely in $CURRENT_RELEASE."
