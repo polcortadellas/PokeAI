@@ -2,15 +2,15 @@ class RewardConfig:
     """
     Configuration parameters for the reward and penalty system.
     """
-    EXPLORATION_REWARD: float = 1.0
-    MAP_DISCOVERY_REWARD: float = 50.0
-    EVENT_REWARD_STEP: float = 50.0
+    EXPLORATION_REWARD: float = 2.0  # (Sube) Que moverse pague bien
+    MAP_DISCOVERY_REWARD: float = 1000.0  # (DISPARADO) ¡Encontrar una ciudad nueva la hará millonaria!
+    EVENT_REWARD_STEP: float = 200.0  # (Sube) Fomentar que hable con NPCs clave
     MENU_PENALTY_STEP: float = -0.1
-    LEVEL_REWARD_STEP: float = 25.0
-    BATTLE_VICTORY_REWARD: float = 50.0
+    LEVEL_REWARD_STEP: float = 2.0  # (NERFEADO) Ya no nos importa tanto el nivel
+    BATTLE_VICTORY_REWARD: float = 10.0  # (NERFEADO) Pelear es secundario
     STEP_PENALTY: float = -0.001
-    POKEDEX_REWARD_STEP: float = 100.0
-    BADGE_REWARD_STEP: float = 500.0
+    POKEDEX_REWARD_STEP: float = 50.0
+    BADGE_REWARD_STEP: float = 5000.0  # El Santo Grial (Derrotar a Brock)
 
 
 class RewardSystem:
@@ -52,6 +52,9 @@ class RewardSystem:
         return self.config.STEP_PENALTY
 
     def compute_level_reward(self, current_total_level: int, is_in_pc: bool) -> float:
+        if current_total_level > 600 or current_total_level <= 0:
+            return 0.0
+
         if self.last_total_level is None:
             self.last_total_level = current_total_level
             return 0.0
@@ -61,13 +64,11 @@ class RewardSystem:
             return 0.0
 
         reward = 0.0
-        if current_total_level > self.last_total_level:
+        if current_total_level > self.last_total_level and (current_total_level - self.last_total_level) < 6:
             level_diff = current_total_level - self.last_total_level
             reward = level_diff * self.config.LEVEL_REWARD_STEP
-
         self.last_total_level = current_total_level
         return reward
-
     def compute_battle_reward(self, current_state: int, previous_state: int) -> float:
         reward = 0.0
         if (previous_state in (1, 2)) and (current_state == 0):
